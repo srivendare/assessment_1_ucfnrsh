@@ -1,0 +1,109 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r project}
+library(maptools)   # A package for building maps
+library(ggplot2)    # To have ggplot2 graphic interface
+library(plyr)       # To manipulate data
+library(graphics)   # Set par()
+library(sp)
+library(rgdal)      # Get ReadOGR to read shapefile
+
+
+#Import China shapefile：
+china_map<-readOGR("/Users/apple/Desktop/CASA/GIS/As 1/DataWarehouse-master/Rstudy/CHN_adm/bou2_4p.shp")
+data1<- china_map@data      
+data2<- data.frame(id=row.names(data1),data1) 
+china_map1 <- fortify(china_map) 
+
+#Transffom and join the data：
+china_map1 <- fortify(china_map) 
+china_map_data <- join(china_map1,data2, type = "full") 
+mydata <- read.csv("/Users/apple/Desktop/CASA/GIS/As 1/drnum.ke.csv")
+china_data <- join(china_map_data, mydata, type="full")
+
+#Get the province coordinates ：
+province_city <- read.csv("/Users/apple/Desktop/CASA/GIS/As 1/chinaprovince.ke.csv") 
+
+
+
+
+# example 1 : Point chart on map
+ggplot(china_data,aes(long,lat))+
+     geom_polygon(aes(group=group),fill="white",colour="grey60")+
+     geom_point(data=province_city,aes(x=jd,y=wd),colour="red")+
+     coord_map("polyconic") + 
+     theme(
+          panel.grid = element_blank(),
+          panel.background = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title = element_blank()
+          )
+
+province_city$Dct_nur<-NULL
+province_city$Dct_nur<-rnorm(31,100,50)
+province_city$EN_NAME<-NULL
+province_city$EN_NAME<-rnorm(31,100,50)
+
+# example 2 : Bubble chart on map
+ggplot()+
+     geom_polygon(data=china_data,aes(x=long,y=lat,group=group),fill="grey95",colour="grey80")+
+     geom_point(data=province_city,aes(x=jd,y=wd,size=Dct_nur),shape=21,fill="#8E0F2E",colour="black",alpha=0.4)+
+     scale_size_area(max_size=8)+
+     coord_map("polyconic") + 
+     guides(size=guide_legend(reverse=TRUE,title=NULL))+ 
+     ggtitle("Numbers of doctor nand nurse per 1000 persons in China")+
+     theme(
+          panel.grid = element_blank(),
+          panel.background = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title = element_blank(),
+          legend.position =c(0.15,0.4),
+          legend.background=element_rect(colour="white",fill="white"),
+          legend.text.align=1
+          )
+# example 3 : Bubble chart with province name on map
+ggplot()+
+     geom_polygon(data=china_data,aes(x=long,y=lat,group=group),fill="grey95",colour="grey80")+
+     geom_point(data=province_city,aes(x=jd,y=wd,size=Dct_nur),shape=21,fill="#8E0F2E",colour="black",alpha=0.4)+
+     scale_size_area(max_size=6)+
+     coord_map("polyconic") + 
+     geom_text(aes(x=jd+2.3,y=wd,label=proname),size =1.5,fontface="plain",data=province_city) +
+     guides(size=guide_legend(reverse=TRUE,title=NULL))+ 
+     ggtitle("Numbers of doctor nand nurse per 1000 persons in China")+
+     theme(
+          panel.grid = element_blank(),
+          panel.background = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          axis.title = element_blank(),
+          legend.position =c(0.15,0.4),
+          legend.background=element_rect(colour="white",fill="white"),
+          legend.text.align=1
+          )
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
